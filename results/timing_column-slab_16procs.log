@@ -1,0 +1,38 @@
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+Hello world, I'm rank 6 of 16 total ranks running on <nid006023>
+Hello world, I'm rank 5 of 16 total ranks running on <nid006023>
+Hello world, I'm rank 1 of 16 total ranks running on <nid006013>
+Hello world, I'm rank 14 of 16 total ranks running on <nid006059>
+Hello world, I'm rank 8 of 16 total ranks running on <nid006048>
+Hello world, I'm rank 3 of 16 total ranks running on <nid006013>
+Hello world, I'm rank 12 of 16 total ranks running on <nid006059>
+Hello world, I'm rank 9 of 16 total ranks running on <nid006048>
+Hello world, I'm rank 4 of 16 total ranks running on <nid006023>
+Hello world, I'm rank 2 of 16 total ranks running on <nid006013>
+Hello world, I'm rank 13 of 16 total ranks running on <nid006059>
+Hello world, I'm rank 11 of 16 total ranks running on <nid006048>
+Hello world, I'm rank 7 of 16 total ranks running on <nid006023>
+Hello world, I'm rank 15 of 16 total ranks running on <nid006059>
+Hello world, I'm rank 10 of 16 total ranks running on <nid006048>
+Hello world, I'm rank 0 of 16 total ranks running on <nid006013>
+
+
+Timing results from rank 0: 
+	Scatter time:	33.2654 (ms) 
+	Sobel time:	14.4551 (ms) 
+	Gather time:	27.9640 (ms) 

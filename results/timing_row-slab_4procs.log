@@ -1,0 +1,14 @@
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+/global/u1/g/guiranl/mpi_2dmesh_harness_instructional/build/./mpi_2dmesh: invalid option -- 'o'
+Hello world, I'm rank 2 of 4 total ranks running on <nid006048>
+Hello world, I'm rank 3 of 4 total ranks running on <nid006059>
+Hello world, I'm rank 0 of 4 total ranks running on <nid006013>
+
+
+Timing results from rank 0: 
+	Scatter time:	37.5534 (ms) 
+	Sobel time:	52.0145 (ms) 
+	Gather time:	30.1414 (ms) 
+Hello world, I'm rank 1 of 4 total ranks running on <nid006023>
