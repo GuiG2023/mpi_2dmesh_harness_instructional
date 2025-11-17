@@ -442,7 +442,7 @@ void recvStridedBuffer(float *dstBuf,
    float *tempBuf = new float[expectedWidth * expectedHeight];
    // receive the data into the temporary buffer
    MPI_Recv(tempBuf, expectedWidth * expectedHeight, MPI_FLOAT,
-            fromRank, msgTag, MPI_COMM_WORLD, &status);
+            fromRank, msgTag, MPI_COMM_WORLD, &stat);
 
    // copy the data from the temporary buffer into the strided location in dstBuf
    for (int i = 0; i < expectedHeight; i++)
