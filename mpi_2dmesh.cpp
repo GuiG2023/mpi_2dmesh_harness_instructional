@@ -47,7 +47,7 @@ int parseArgs(int ac, char *av[], AppState *as)
    int rstat = 0;
    int c;
 
-   while ((c = getopt(ac, av, "va:g:x:y:i:")) != -1)
+   while ((c = getopt(ac, av, "va:g:x:y:i:o:")) != -1)
    {
       switch (c)
       {
@@ -489,7 +489,30 @@ float sobel_filtered_pixel(float *s, int i, int j, int ncols, int nrows,
 }
 
 // Sobel
-void do_sobel_filtering(float *in, float *out, int ncols, int nrows)
+// void do_sobel_filtering(float *in, float *out, int ncols, int nrows)
+// {
+//    // Sobel X
+//    float Gx[] = {1.0, 0.0, -1.0,
+//                  2.0, 0.0, -2.0,
+//                  1.0, 0.0, -1.0};
+
+//    // Sobel Y
+//    float Gy[] = {1.0, 2.0, 1.0,
+//                  0.0, 0.0, 0.0,
+//                  -1.0, -2.0, -1.0};
+
+//    //  no OpenMP
+//    for (int i = 0; i < nrows; i++)
+//    {
+//       for (int j = 0; j < ncols; j++)
+//       {
+
+//          out[i * ncols + j] = sobel_filtered_pixel(in, i, j, ncols, nrows, Gx, Gy);
+//       }
+//    }
+// }
+
+void do_sobel_filtering(float *in, float *out, int halo_width, int tile_width, int tile_height)
 {
    // Sobel X
    float Gx[] = {1.0, 0.0, -1.0,
@@ -501,17 +524,19 @@ void do_sobel_filtering(float *in, float *out, int ncols, int nrows)
                  0.0, 0.0, 0.0,
                  -1.0, -2.0, -1.0};
 
-   //  no OpenMP
-   for (int i = 0; i < nrows; i++)
+   // Process only the core tile area, using halo data for neighbors
+   for (int i = 0; i < tile_height; i++)
    {
-      for (int j = 0; j < ncols; j++)
+      for (int j = 0; j < tile_width; j++)
       {
+         // Map to halo coordinates (offset by 1)
+         int halo_i = i + 1;
+         int halo_j = j + 1;
 
-         out[i * ncols + j] = sobel_filtered_pixel(in, i, j, ncols, nrows, Gx, Gy);
+         out[i * tile_width + j] = sobel_filtered_pixel(in, halo_i, halo_j, halo_width, tile_height + 2, Gx, Gy);
       }
    }
 }
-
 void sobelAllTiles(int myrank, vector<vector<Tile2D>> &tileArray)
 {
    for (int row = 0; row < tileArray.size(); row++)
@@ -533,9 +558,11 @@ void sobelAllTiles(int myrank, vector<vector<Tile2D>> &tileArray)
 #endif
             // ADD YOUR CODE HERE
 
-            // only process tiles owned by this rank
+            // Process tiles with HALO data
+            int halo_width = t->width + 2;
             do_sobel_filtering(t->inputBuffer.data(),  // input data
                                t->outputBuffer.data(), // output data
+                               halo_width,             // input width with halo
                                t->width,
                                t->height);
          }
@@ -543,6 +570,128 @@ void sobelAllTiles(int myrank, vector<vector<Tile2D>> &tileArray)
    }
 }
 
+// void scatterAllTiles(int myrank, vector<vector<Tile2D>> &tileArray, float *s, int global_width, int global_height)
+// {
+
+// #if DEBUG_TRACE
+//    printf(" Rank %d is entering scatterAllTiles \n", myrank);
+// #endif
+//    for (int row = 0; row < tileArray.size(); row++)
+//    {
+//       for (int col = 0; col < tileArray[row].size(); col++)
+//       {
+//          Tile2D *t = &(tileArray[row][col]);
+
+//          if (myrank != 0 && t->tileRank == myrank)
+//          {
+//             int fromRank = 0;
+
+//             //             // receive a tile's buffer
+//             //             t->inputBuffer.resize(t->width * t->height);
+//             //             t->outputBuffer.resize(t->width * t->height);
+//             // #if DEBUG_TRACE
+//             //             printf("scatterAllTiles() receive side:: t->tileRank=%d, myrank=%d, t->inputBuffer->size()=%d, t->outputBuffersize()=%d \n", t->tileRank, myrank, t->inputBuffer.size(), t->outputBuffer.size());
+//             // #endif
+
+//             //             recvStridedBuffer(t->inputBuffer.data(), t->width, t->height,
+//             //                               0, 0,                // offset into the tile buffer: we want the whole thing
+//             //                               t->width, t->height, // how much data coming from this tile
+//             //                               fromRank, myrank);
+//             //          }
+
+//             // receive a tile's buffer WITH HALO
+//             int halo_width = t->width + 2;
+//             int halo_height = t->height + 2;
+//             t->inputBuffer.resize(halo_width * halo_height);
+//             t->outputBuffer.resize(t->width * t->height); // output without halo
+// #if DEBUG_TRACE
+//             printf("scatterAllTiles() receive side:: t->tileRank=%d, myrank=%d, t->inputBuffer->size()=%d, t->outputBuffersize()=%d \n", t->tileRank, myrank, t->inputBuffer.size(), t->outputBuffer.size());
+// #endif
+
+//             // Direct MPI receive for halo data with proper boundary handling
+//             MPI_Status stat;
+//             MPI_Recv(t->inputBuffer.data(), halo_width * halo_height, MPI_FLOAT,
+//                      fromRank, 0, MPI_COMM_WORLD, &stat);
+//          }
+//          else if (myrank == 0)
+//          {
+//             if (t->tileRank != 0)
+//             {
+
+//                // Create a temporary buffer with proper halo handling
+//                int halo_width = t->width + 2;
+//                int halo_height = t->height + 2;
+//                float *tempBuf = new float[halo_width * halo_height];
+
+//                // Initialize to 0
+//                std::fill_n(tempBuf, halo_width * halo_height, 0.0f);
+
+//                // Calculate actual copy region
+//                int send_xloc = max(0, t->xloc - 1);
+//                int send_yloc = max(0, t->yloc - 1);
+//                int copy_width = min(t->width + 2, global_width - send_xloc);
+//                int send_height = min(t->height + 2, global_height - send_yloc);
+
+//                // Calculate offset in destination buffer
+//                int dst_x_offset = (t->xloc == 0) ? 1 : 0;
+//                int dst_y_offset = (t->yloc == 0) ? 1 : 0;
+
+//                // Copy data to temp buffer with correct alignment
+//                for (int j = 0; j < send_height; j++)
+//                {
+//                   int s_offset = (send_yloc + j) * global_width + send_xloc;
+//                   int d_offset = (dst_y_offset + j) * halo_width + dst_x_offset;
+//                   memcpy(&tempBuf[d_offset], &s[s_offset], sizeof(float) * copy_width);
+//                }
+
+//                // Send the properly aligned buffer
+//                MPI_Send(tempBuf, halo_width * halo_height, MPI_FLOAT,
+//                         t->tileRank, 0, MPI_COMM_WORLD);
+
+//                delete[] tempBuf;
+//             }
+//             else // rank 0 local copy WITH HALO
+//             {
+//                int halo_width = t->width + 2;
+//                int halo_height = t->height + 2;
+//                t->inputBuffer.resize(halo_width * halo_height);
+//                t->outputBuffer.resize(t->width * t->height);
+
+//                // Initialize halo buffer to 0
+//                std::fill(t->inputBuffer.begin(), t->inputBuffer.end(), 0.0f);
+
+//                // Calculate actual copy region
+//                int send_xloc = max(0, t->xloc - 1);
+//                int send_yloc = max(0, t->yloc - 1);
+//                int cpoy_width = min(t->width + 2, global_width - send_xloc);
+//                int send_height = min(t->height + 2, global_height - send_yloc);
+
+//                // Calculate offset in destination buffer
+//                int dst_x_offset = (t->xloc == 0) ? 1 : 0;
+//                int dst_y_offset = (t->yloc == 0) ? 1 : 0;
+
+//                float *d = t->inputBuffer.data();
+//                for (int j = 0; j < send_height; j++)
+//                {
+//                   int s_offset = (send_yloc + j) * global_width + send_xloc;
+//                   int d_offset = (dst_y_offset + j) * halo_width + dst_x_offset;
+//                   memcpy((void *)(d + d_offset), (void *)(s + s_offset), sizeof(float) * copy_width);
+//                }
+//             }
+//          }
+//       }
+//    } // loop over 2D array of tiles
+
+// #if DEBUG_TRACE
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    if (myrank == 1)
+//    {
+//       printf("\n\n ----- rank=%d, inside scatterAllTiles debug printing of the tile array \n", myrank);
+//       printTileArray(tileArray);
+//    }
+//    MPI_Barrier(MPI_COMM_WORLD);
+// #endif
+// }
 void scatterAllTiles(int myrank, vector<vector<Tile2D>> &tileArray, float *s, int global_width, int global_height)
 {
 
@@ -557,46 +706,72 @@ void scatterAllTiles(int myrank, vector<vector<Tile2D>> &tileArray, float *s, in
 
          if (myrank != 0 && t->tileRank == myrank)
          {
+
             int fromRank = 0;
 
-            // receive a tile's buffer
-            t->inputBuffer.resize(t->width * t->height);
+            int halo_width = t->width + 2;
+            int halo_height = t->height + 2;
+            t->inputBuffer.resize(halo_width * halo_height);
             t->outputBuffer.resize(t->width * t->height);
+
 #if DEBUG_TRACE
             printf("scatterAllTiles() receive side:: t->tileRank=%d, myrank=%d, t->inputBuffer->size()=%d, t->outputBuffersize()=%d \n", t->tileRank, myrank, t->inputBuffer.size(), t->outputBuffer.size());
 #endif
 
-            recvStridedBuffer(t->inputBuffer.data(), t->width, t->height,
-                              0, 0,                // offset into the tile buffer: we want the whole thing
-                              t->width, t->height, // how much data coming from this tile
-                              fromRank, myrank);
+            MPI_Status stat;
+            MPI_Recv(t->inputBuffer.data(), halo_width * halo_height, MPI_FLOAT,
+                     fromRank, 0, MPI_COMM_WORLD, &stat);
          }
          else if (myrank == 0)
          {
+
+            int halo_width = t->width + 2;
+            int halo_height = t->height + 2;
+
+            int src_x_start = max(0, t->xloc - 1);
+            int src_y_start = max(0, t->yloc - 1);
+
+            int src_x_end_excl = min(t->xloc + t->width + 1, global_width);
+            int src_y_end_excl = min(t->yloc + t->height + 1, global_height);
+
+            int copy_width = src_x_end_excl - src_x_start;
+            int copy_height = src_y_end_excl - src_y_start;
+
+            int dst_x_offset = (t->xloc == 0) ? 1 : 0;
+            int dst_y_offset = (t->yloc == 0) ? 1 : 0;
+
+            float *buffer_to_use = nullptr;
+
             if (t->tileRank != 0)
             {
-#if DEBUG_TRACE
-               printf("scatterAllTiles() send side: t->tileRank=%d, myrank=%d, t->inputBuffer->size()=%d \n", t->tileRank, myrank, t->inputBuffer.size());
-#endif
 
-               sendStridedBuffer(s,                           // ptr to the buffer to send
-                                 global_width, global_height, // size of the src buffer
-                                 t->xloc, t->yloc,            // offset into the send buffer
-                                 t->width, t->height,         // size of the buffer to send,
-                                 myrank, t->tileRank);
+               float *tempBuf = new float[halo_width * halo_height];
+               std::fill_n(tempBuf, halo_width * halo_height, 0.0f);
+               buffer_to_use = tempBuf;
             }
-            else // rather then have rank 0 send to rank 0, just do a strided copy into a tile's input buffer
+            else
             {
-               t->inputBuffer.resize(t->width * t->height);
+
+               t->inputBuffer.resize(halo_width * halo_height);
                t->outputBuffer.resize(t->width * t->height);
+               std::fill(t->inputBuffer.begin(), t->inputBuffer.end(), 0.0f);
+               buffer_to_use = t->inputBuffer.data();
+            }
 
-               off_t s_offset = 0, d_offset = 0;
-               float *d = t->inputBuffer.data();
+            for (int j = 0; j < copy_height; j++)
+            {
 
-               for (int j = 0; j < t->height; j++, s_offset += global_width, d_offset += t->width)
-               {
-                  memcpy((void *)(d + d_offset), (void *)(s + s_offset), sizeof(float) * t->width);
-               }
+               int s_offset = (src_y_start + j) * global_width + src_x_start;
+               int d_offset = (dst_y_offset + j) * halo_width + dst_x_offset;
+
+               memcpy((void *)(buffer_to_use + d_offset), (void *)(s + s_offset), sizeof(float) * copy_width);
+            }
+
+            if (t->tileRank != 0)
+            {
+               MPI_Send(buffer_to_use, halo_width * halo_height, MPI_FLOAT,
+                        t->tileRank, 0, MPI_COMM_WORLD);
+               delete[] buffer_to_use;
             }
          }
       }
@@ -612,7 +787,6 @@ void scatterAllTiles(int myrank, vector<vector<Tile2D>> &tileArray, float *s, in
    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
-
 void gatherAllTiles(int myrank, vector<vector<Tile2D>> &tileArray, float *d, int global_width, int global_height)
 {
 

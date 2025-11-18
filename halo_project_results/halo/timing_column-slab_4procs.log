@@ -1,0 +1,10 @@
+Hello world, I'm rank 1 of 4 total ranks running on <nid004734>
+Hello world, I'm rank 2 of 4 total ranks running on <nid004735>
+Hello world, I'm rank 3 of 4 total ranks running on <nid006159>
+Hello world, I'm rank 0 of 4 total ranks running on <nid004717>
+
+
+Timing results from rank 0: 
+	Scatter time:	40.7153 (ms) 
+	Sobel time:	49.3252 (ms) 
+	Gather time:	34.5036 (ms) 
