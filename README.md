@@ -86,11 +86,6 @@ During the **scatter** phase, Rank 0 sends `(width+2) × (height+2)` buffers inc
 Each rank processes its tile using halo coordinates `(i+1, j+1)`, and the **gather** phase returns only the core `(width × height)` region.  
 This eliminates seams at tile boundaries and increases scatter payloads by less than 3 %, with no measurable runtime cost.
 
-**Visual correctness comparison (N = 81):**
-
-| Base (no halo) | Halo-enabled |
-|-----------------|---------------|
-| ![Before](81before.jpeg) | ![After](81after.jpeg) |
 
 ---
 
